@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Synthworks — Premium Agency Management Dashboard.">
+  <title>Synthworks — Dashboard</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS (via CDN for simplicity, keeping the stack identical) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Outfit', 'sans-serif'] },
+          colors: {
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
+            secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
+            destructive: { DEFAULT: 'hsl(var(--destructive))' },
+            muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+            accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
+            card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- External Scripts -->
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Custom CSS & JS -->
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body class="bg-background text-foreground flex h-screen w-full antialiased overflow-hidden">
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-background/90 backdrop-blur-md transition-opacity duration-500">
+    <!-- Login Form -->
+    <div id="login-form-container" class="glass premium-card w-full max-w-md p-8 animate-scale-in">
+      <div class="text-center mb-8">
+        <div class="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 text-primary mb-4 shadow-lg shadow-primary/20">
+          <i data-lucide="zap" class="h-8 w-8"></i>
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight text-gradient">Synthworks</h1>
+        <p class="text-muted-foreground mt-2 font-medium">Sign in to your premium workspace</p>
+      </div>
+      
+      <div class="space-y-5">
+        <div class="space-y-2">
+          <label class="text-sm font-semibold">Email</label>
+          <input id="login-email" type="email" class="premium-input" placeholder="name@agency.com">
+        </div>
+        
+        <div class="space-y-2">
+          <label class="text-sm font-semibold">Password</label>
+          <div class="relative">
+            <input id="login-password" type="password" class="premium-input pr-10" placeholder="••••••••">
+            <button id="btn-toggle-login-pw" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors">
+              <i data-lucide="eye" class="h-5 w-5"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div id="login-error" class="hidden p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium border border-destructive/20"></div>
+        
+        <button id="btn-login" class="btn-primary w-full h-12 text-lg shadow-xl shadow-primary/20 gap-2">
+          <i data-lucide="log-in" class="h-5 w-5"></i> Sign In
+        </button>
+        
+        <div class="text-center mt-6">
+          <p class="text-sm text-muted-foreground">
+            Don't have an account? 
+            <button id="btn-show-register" class="text-primary font-bold hover:underline">Create one</button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form-container" class="glass premium-card w-full max-w-md p-8 hidden animate-scale-in">
+      <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-gradient">Create Workspace</h1>
+        <p class="text-muted-foreground mt-1 text-sm font-medium">Setup your agency in seconds</p>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label class="text-sm font-semibold">First Name</label>
+            <input id="reg-first" type="text" class="premium-input">
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-sm font-semibold">Last Name</label>
+            <input id="reg-last" type="text" class="premium-input">
+          </div>
+        </div>
+        
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold">Workspace Name</label>
+          <input id="reg-workspace" type="text" class="premium-input" placeholder="Acme Agency">
+        </div>
+        
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold">Email</label>
+          <input id="reg-email" type="email" class="premium-input" placeholder="name@agency.com">
+        </div>
+        
+        <div class="space-y-1.5">
+          <label class="text-sm font-semibold">Password</label>
+          <input id="reg-password" type="password" class="premium-input" placeholder="••••••••">
+        </div>
+        
+        <div id="register-error" class="hidden p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium border border-destructive/20"></div>
+        
+        <button id="btn-register" class="btn-primary w-full h-12 text-lg shadow-xl shadow-primary/20 gap-2 mt-2">
+          <i data-lucide="rocket" class="h-5 w-5"></i> Create Workspace
+        </button>
+        
+        <div class="text-center mt-4">
+          <p class="text-sm text-muted-foreground">
+            Already have an account? 
+            <button id="btn-show-login" class="text-primary font-bold hover:underline">Sign in</button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-64 border-r border-border bg-card/80 backdrop-blur-xl flex flex-col transition-transform duration-300 z-40 fixed lg:relative h-full -translate-x-full lg:translate-x-0">
+    <!-- Header -->
+    <div class="h-20 flex items-center px-6 border-b border-border/50 shrink-0">
+      <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30 mr-3">
+        <i data-lucide="zap" class="h-5 w-5"></i>
+      </div>
+      <span class="font-bold text-xl tracking-tight text-gradient" id="app-name">Synthworks</span>
+      <button id="btn-close-sidebar" class="ml-auto lg:hidden text-muted-foreground hover:text-foreground">
+        <i data-lucide="x" class="h-6 w-6"></i>
+      </button>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2" id="sidebar-nav">
+      <!-- Injected via JS -->
+    </nav>
+
+    <!-- Footer Profile -->
+    <div class="p-4 border-t border-border/50 shrink-0">
+      <div class="flex items-center gap-3 premium-card p-3 rounded-xl bg-background/50">
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-bold shadow-inner" id="user-avatar">
+          U
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-bold truncate text-foreground" id="user-name">User Name</p>
+          <p class="text-xs font-medium text-muted-foreground truncate" id="user-role">Founder</p>
+        </div>
+        <button id="btn-logout" class="p-2 rounded-lg text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Content Area -->
+  <div class="flex-1 flex flex-col relative w-full h-full">
+    <!-- Top Header -->
+    <header class="h-20 flex items-center justify-between px-6 lg:px-10 border-b border-border/50 glass z-30 sticky top-0">
+      <div class="flex items-center gap-4">
+        <button id="btn-open-sidebar" class="lg:hidden text-muted-foreground hover:text-foreground">
+          <i data-lucide="menu" class="h-6 w-6"></i>
+        </button>
+        <h2 class="text-2xl font-bold tracking-tight text-foreground" id="page-title">Dashboard</h2>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button id="btn-theme-toggle" class="h-10 w-10 flex-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-all">
+          <i data-lucide="sun" class="h-5 w-5 hidden dark:block"></i>
+          <i data-lucide="moon" class="h-5 w-5 block dark:hidden"></i>
+        </button>
+        
+        <button class="relative h-10 w-10 flex-center rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-all">
+          <i data-lucide="bell" class="h-5 w-5"></i>
+          <span class="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto p-6 lg:p-10 bg-background/50 relative" id="main-content">
+      <!-- Dynamic Pages Injected Here -->
+    </main>
+  </div>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div id="sidebar-overlay" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-30 hidden lg:hidden opacity-0 transition-opacity"></div>
+
+</body>
+</html>
